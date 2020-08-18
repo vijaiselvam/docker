@@ -1,0 +1,23 @@
+sudo systemctl enable docker
+
+docker ps
+
+whoami
+
+logout
+
+docker ps
+
+sudo curl -L "https://github.com/docker/compose/releases/download/1.26.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose  -> docker compose installation
+
+sudo chmod +x /usr/local/bin/docker-compose  -> Giving executable permission for that path 
+
+docker-compose
+
+docker pull jenkins
+
+docker images
+
+docker info | grep -i root  -> To know where docker is saving the files
+
+sudo du -sh /var/lib/docker  -> To know how much space docker is taking 

@@ -1,23 +1,245 @@
-sudo systemctl enable docker
+This file is for learning jenkins with docker, aws, ansible
 
-docker ps
 
-whoami
+#sudo systemctl enable docker
 
-logout
+#docker ps
 
-docker ps
+#whoami
 
-sudo curl -L "https://github.com/docker/compose/releases/download/1.26.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose  -> docker compose installation
+#logout
 
-sudo chmod +x /usr/local/bin/docker-compose  -> Giving executable permission for that path 
+#docker ps
 
-docker-compose
+#sudo curl -L "https://github.com/docker/compose/releases/download/1.26.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose  -> docker compose installation
 
-docker pull jenkins
+#sudo chmod +x /usr/local/bin/docker-compose  -> Giving executable permission for that path 
 
-docker images
+#docker-compose
 
-docker info | grep -i root  -> To know where docker is saving the files
+#docker pull jenkins
 
-sudo du -sh /var/lib/docker  -> To know how much space docker is taking 
+#docker images
+
+#docker info | grep -i root  -> To know where docker is saving the files
+
+#sudo du -sh /var/lib/docker  -> To know how much space docker is taking
+
+#ll
+
+#ls
+
+#mkdir jenkins
+
+#pwd
+
+#mv jenkins/ jenkins-data
+
+#cd jenkins-data/
+
+#mkdir jenkins_home
+
+#vi docker-compose.yml
+
+#echo $PWD
+
+#echo $PWD/jenkins_home
+
+#cat docker-compose.yml
+
+#ls -l
+
+#ls jenkins_home/ -l
+
+#id
+
+#sudo chown 1000:1000 jenkins_home -R
+
+#docker-compose up -d
+
+#docker ps
+
+#docker logs -f jenkins    -> this provides the password for jenkins login: login to ip: http://192.168.225.85:8080/
+
+#docker-compose stop   -> to stop the jenkins
+#docker-compose start -> to start the jenkins
+#docker-compose resart jenkins  -> to resart the jenkins
+#docker-compose down -> to delete the service
+#docker-compose up -d  -> create the servic or recreate the service
+
+#rm -r jenkins_home   -> to delete a folder and its content
+#docker rmi Image Image -> to remove a docker image(remove it from container before removing)
+
+#docker exec -ti jenkins bash  -> to navigate inside jenkins image
+
+#exit --> to exit from jenkins image
+
+#touch /tmp/hello  -> to create a file
+
+#cat /tmp/hello  -> to view the file
+
+
+ echo "Current date and time is $(date)"  -> to print via windows shell
+  echo "Current date and time is $(date)" > /tmp/info
+cat /tmp/info
+NAME=Vijai
+echo "My name is $NAME"
+ rm -rf /tmp/info  -> to delete the file
+ 
+vi script.sh   -> to create file - use vi and file name
+./script.sh  -> to execute a script file, if getting permission denied, then need to set executable permission.
+chmod +x ./script.sh  -> To set executable permission
+
+NAME=$1
+LASTNAME=$2
+echo "hello, $NAME $LASTNAME"    -> add this to script file to execute
+
+docker cp script.sh jenkins:/tmp/script.sh  -> To copy file to docker container, here jenkins is the name of the container and script.sh is the name of the file.
+
+ctrl + r  -> to search for a previously entered comments.
+
+-----------------------------------
+Jenkins Jobs Windows Terminal Commands
+
+NAME=Vijai
+LASTNAME=Selvam
+SHOW=true
+echo Hello World
+echo "Name is $NAME Current date and time is $(date)"
+echo "Current date and time is $(date)" > /tmp/info
+/tmp/script.sh $NAME $LASTNAME $SHOW
+
+script.sh file
+#!/bin/bash
+
+NAME=$1
+LASTNAME=$2
+SHOW=$3
+
+if [ "$SHOW" = "true" ]; then
+ echo "hello, $NAME $LASTNAME"
+else
+ echo "Please check show button"
+fi
+
+-----------------------------------
+
+
+To Create a Docker Image
+
+
+#mkdir centos7
+#cd centos7
+#vi Dockerfile
+
+Dockerfile: 
+----
+FROM centos:7
+
+RUN yum -y install openssh-server
+
+RUN useradd remote_user && \
+    echo "1234" | passwd remote_user --stdin && \
+    mkdir /home/remote_user/.ssh && \
+    chmod 700 /home/remote_user/.ssh
+----	
+end of file
+
+#ssh-keygen -f remote-key   -> create ssh remote key
+#ll  -> list remote key files
+
+Update docker-compose.yml file
+-----
+version: '3'
+services:
+  jenkins:
+    container_name: jenkins
+    image: jenkins/jenkins
+    ports:
+      - "8080:8080"
+    volumes:
+      - $PWD/jenkins_home:/var/jenkins_home
+    networks:
+      - net
+  remote_host:
+    container_name: remote-host
+    image: remote-host
+    build:
+      context: centos7
+    networks:
+      - net
+networks:
+  net:
+----
+end of file
+
+#docker-compose build   -> to create the image
+
+#docker images --> check will be having the new image.
+
+#docker-compose up -d   -> to spin up the remote host server
+
+#docker ps   -> remote host will be up and running
+
+#ssh remote_user@remote_host --> now ssh in remote_host, use password 1234
+
+#exit
+#docker cp ./remote-key jenkins:/tmp/remote-key
+#docker exec -ti jenkins bash
+#cd tmp/
+#ssh -i remote-key remote_user@remote_host  -> To ssh using private key file without password.
+
+
+-----------------------------------------
+Create SQl image
+
+Add this in docker-compose.yml file
+----
+db_host:
+    container_name: db
+    image: mysql:5.7
+    environment:
+      - "MYSQL_ROOT_PASSWORD=1234"
+    volumes:
+      - "$PWD/db_data:/var/lib/mysql"
+    networks:
+      - net
+----
+#docker-compose up -d     -> to download the image
+
+#docker logs -f db   -> to check the logs of mysql container db
+
+#docker exec -ti db bash  --> enter into the container
+
+#mysql -u root -p  -> login to mysql
+ 
+#show databases;  -> to check for the databases.
+ 
+#exit
+ 
+#docker exec -ti remote-host bash  -> connect to remote host and check for mysql and aws. Both won't be available. Then we need to recreate the image with mysql and aws.
+ 
+Then add the below configuration in docker file to build again.
+--- 
+RUN yum -y install mysql
+
+RUN curl -O https://bootstrap.pypa.io/get-pip.py && \
+    python3 get-pip.py && \
+    pip3 install awscli --upgrade
+	
+---
+
+#docker-compose build  -> to recreate the remote-host image
+
+ 
+
+#docker-compose up -d  -> Once image has been download then spin the server again
+
+
+----------------------------------------
+
+
+
+
+
+

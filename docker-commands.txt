@@ -1,5 +1,30 @@
 This file is for learning jenkins with docker, aws, ansible
 
+Linux Centos Machine uname/pwd: jenkins/1234
+Jenkins uname/pwd: admin/1234
+
+--------------------
+Basic Linux Commands
+--------------------
+#ls
+#ll
+#whoami
+#logout
+#pwd
+#rm -i filename  -> To delete a file
+#cp source destination   eg. cp /tmp/script.sh /tmp/backup/script.sh-> To copy a file
+#mkdir foldername  -> To create a folder
+
+
+
+--------------------
+Basic Docker Commands
+---------------------
+#docker images
+#docker ps
+
+
+---------------------
 
 #sudo systemctl enable docker
 
@@ -235,11 +260,39 @@ RUN curl -O https://bootstrap.pypa.io/get-pip.py && \
 
 #docker-compose up -d  -> Once image has been download then spin the server again
 
+Now if you login to remote-host and check for mysql and aws, it will be shown.
 
+To connect to mysql instance
+
+#docker exec -ti remote-host bash  -> enter into remote host
+#mysql -u root -h db_host -p1234   -> connect to mysql -u(user) root user  and -h (host we are trying to connect) here its db_host(name is mentioned in docker-compose file) -p (using password 1234)
+
+To Create Database
+--------
+>create database testdb;
+>use testdb;
+>create table info (name varchar(20), lastname varchar(20), age int(2));
+>desc info;
+>show tables;
+>insert into info values ("Vijai", "Selvam", 27);
+>select * from info;
 ----------------------------------------
 
 
+docker rm -fv remote-host   -> to delete a container
 
-
+-----------------
+How to check if a directory is exits
+-----------------
+DIR="/etc/httpd/"
+if [ -d "$DIR" ]; then
+  ### Take action if $DIR exists ###
+  echo "Installing config files in ${DIR}..."
+else
+  ###  Control will jump here if $DIR does NOT exists ###
+  echo "Error: ${DIR} not found. Can not continue."
+  exit 1
+fi
+-------------------
 
 

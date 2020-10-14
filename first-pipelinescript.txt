@@ -1,0 +1,130 @@
+pipeline {
+	agent any
+	stages {
+		stage('Build') {
+			steps {
+				echo 'Building..'
+			}
+		}
+		stage ('Test') {
+			steps {
+				echo 'Testing..'
+			}
+		}
+		stage ('Deploy') {
+			steps {
+				echo 'Deploying..'
+			}
+		}	
+	}
+}
+-----------
+multisteps
+----------
+pipeline {
+	agent any
+	stages {
+		stage('Build') {
+			steps {
+				sh 'echo "My First pipeline"'
+				sh '''
+					echo "B the way, I can do more stuffs here"
+					ls -lah
+				'''
+			}
+		}
+	}
+}
+--------
+retry steps
+-----------
+pipeline {
+	agent any
+	stages {
+		stage('Build') {
+			steps {
+				retry(3) {
+					sh 'I am not going to work :c'
+				}
+			}
+		}
+	}
+}
+-----------
+timeout steps
+-----------
+pipeline {
+	agent any
+	stages {
+		stage('Deploy') {
+			steps {
+				retry(3) {
+					sh 'echo Hello Vijai'
+				}
+				timeout(time: 3, unit: 'SECONDS') {
+					sh 'sleep 5'
+				}
+			}
+		}
+	}
+}
+--------
+Environment Variables
+---------
+pipeline {
+	agent any
+	environment {
+		NAME = 'Vijai'
+		LASTNAME = 'Selvam'
+	}
+	stages {
+		stage('Build') {
+			steps {
+				sh 'echo Hello $NAME $LASTNAME'
+			}
+		}
+	}
+}
+--------
+Credentials
+---------
+pipeline {
+	agent any
+	environment {
+		secret = credentials('SECRET_TEXT')
+	}
+	stages {
+		stage('Build') {
+			steps {
+				sh 'echo $secret'
+			}
+		}
+	}
+}
+--------
+POST ACTIONS
+---------
+pipeline {
+	agent any
+	stages {
+		stage('Test') {
+			steps {
+				sh 'echo "Fail!"; exit 1'
+			}
+		}
+	}
+	post {
+		always {
+			echo 'I will always get executed :D'
+		}
+		success {
+			echo 'I will only get executed if this success'
+		}
+		failure {
+			echo 'I will only get executed if this fails'
+		}
+		unstable {
+			echo 'I will only get executed if this is unstable'
+		}
+	}
+}

@@ -294,5 +294,232 @@ else
   exit 1
 fi
 -------------------
+Access all Jenkins environment variables here https://wiki.jenkins.io/display/JENKINS/Building+a+software+project#:~:text=and%20configure%20appropriately-,Jenkins%20Set%20Environment%20Variables,all%20of%20these%20environment%20variables.&text=The%20name%20of%20the%20node%20the%20current%20build%20is%20running%20on.
+
+------------------------------
+Section 9 Configure Email Notification
+------------------------------
+1. Maker sure mailer plugin is installed.
+2. Goto Manage Jenkins -> Configure System - At the end check email notification
+3. To connect with gmail -> Enter gmail smtp server
+4. Check Smptp Authentication -> click advanced -> enter gmail usernam/password -> Check use SSL -> Enter 465 as SmTP port
+5. In google search for less secure apps -> Choose your gmail account and enable this option.
+
+-----------------------
+Section 10 Jenkins and Maven
+-----------------
+1. Install maven plugin if not already installed -Maven Integration
+2. Check if git plugin is installed if not then install it.
+3. check for sample maven app in google and copy the git url 
+4. sample app url: https://github.com/jenkins-docs/simple-java-maven-app.git
+5. Create a new job and place the url and build.
+6. To check for workspace
+[jenkins@localhost ~]$ docker exec -ti jenkins bash
+jenkins@c035637d83ec:/$ cd /var/jenkins_home/workspace/
+jenkins@c035637d83ec:~/workspace$ ls -l
+To check for the cloned git
+jenkins@c035637d83ec:~/workspace$ cd maven-job/
+jenkins@c035637d83ec:~/workspace/maven-job$ ls -l
+To see the hidden files
+jenkins@c035637d83ec:~/workspace/maven-job$ ls -la
+How to build a jar using maven
+-------
+1. define maven installation in jenkins -> manage jenkins -> global tool configuration -> maven  (eg. name: jenkins-maven)
+2. Configure the maven-job -> Build -> Invoke top level maven targets -> choose the name already given eg. jenkins-maven
+3. Add the build goal(you can copy this code from jenkins folder in the git url mentioned) -> -B -DskipTests clean package - save and build now
+4. Check the jar file in target folder.
+5. Now Configure the maven-job for test -> Build -> Invoke top level maven targets -> choose the name already given eg. jenkins-maven
+3. Add the build goal -> test - save and build now
+Deploy the jar
+--------
+1. copy the jar path from console output eg here. /var/jenkins_home/workspace/maven-job/target/my-app-1.0-SNAPSHOT.jar
+2. Configure the maven-job -> Build -> Execute shell
+3. Add the below code and save and build now -> you will see "hello world" in console output.
+echo "********"
+java -jar /var/jenkins_home/workspace/maven-job/target/my-app-1.0-SNAPSHOT.jar
+To display the result of test using graph
+------
+1. Get the details of the report from console output -> [INFO] Surefire report directory: /var/jenkins_home/workspace/maven-job/target/surefire-reports
+2. Check in putty jenkins@c035637d83ec:~/workspace/maven-job$ ls target/surefire-reports/
+3. there is an xml file contains the report. So provide this path in job eg. target/surefire-reports/*.xml
+4. Configure the maven-job -> Post Build Actions -> Publish Junit Test Results Report -> target/surefire-reports/*.xml -> click save and build atleast 2 times to see the report
+--------------
+To archieve Artifacts eg. To archive the jar built.
+--------------
+1. 6. To Connect to docker
+[jenkins@localhost ~]$ docker exec -ti jenkins bash
+jenkins@c035637d83ec:/$ cd /var/jenkins_home/workspace/maven-job/
+jenkins@c035637d83ec:~/workspace/maven-job$ ls -l target/*.jar
+2. Copy the path target/*.jar
+3. Configure the jenkins maven-job -> End of the configuration page -> Add post-build action-> Archive Artifacts -> Enter the path eg. target/*.jar
+4. Click save and build.
+5. You will see the artifacts in the dashboard. You can also download it.
+-------
+Email Notification about build failure
+------
+1. configure the maven-job -> Add post build acction-> Email notification -> Enter your email.
+2. To test failure -> pass some wrong params -> And save and build now to see 
+3. If mail not getting sent, Make sure you have configured mailing setup.
+
+
+-----------------
+Pipeline Creation
+-----------------
+1. Install pipeline plugin in jenkins
+2. Copy the script in first-pipelinscript.txt file.
+3. Create new item in jenkins named pipeline and choose pipeline option and click ok.
+4. paste the code in the bottom of the pipeline job in pipeline script. Click save
+5. Click build now -> you will see the stage view of different stages.
+
+Here is the code for first pipeline
+---
+pipeline {
+	agent any
+	stages {
+		stage('Build') {
+			steps {
+				echo 'Building..'
+			}
+		}
+		stage ('Test') {
+			steps {
+				echo 'Testing..'
+			}
+		}
+		stage ('Deploy') {
+			steps {
+				echo 'Deploying..'
+			}
+		}	
+	}
+}
+---
+
+Add multi Steps to your pipeline
+
+pipeline {
+	agent any
+	stages {
+		stage('Build') {
+			steps {
+				sh 'echo "My First pipeline"'
+				sh '''
+					echo "B the way, I can do more stuffs here"
+					ls -lah
+				'''
+			}
+		}
+	}
+}
+-------------
+retry steps
+-----
+pipeline {
+	agent any
+	stages {
+		stage('Build') {
+			steps {
+				retry(3) {
+					sh 'I am not going to work :c'
+				}
+			}
+		}
+	}
+}
+------
+timeout steps 
+-------
+pipeline {
+	agent any
+	stages {
+		stage('Deploy') {
+			steps {
+				retry(3) {
+					sh 'echo Hello Vijai'
+				}
+				timeout(time: 3, unit: 'SECONDS') {
+					sh 'sleep 5'
+				}
+			}
+		}
+	}
+}
+--------
+Environment Variables
+---------
+pipeline {
+	agent any
+	environment {
+		NAME = 'Vijai'
+		LASTNAME = 'Selvam'
+	}
+	stages {
+		stage('Build') {
+			steps {
+				sh 'echo Hello $NAME $LASTNAME'
+			}
+		}
+	}
+}
+--------
+Credentials
+---------
+pipeline {
+	agent any
+	environment {
+		secret = credentials('SECRET_TEXT')
+	}
+	stages {
+		stage('Build') {
+			steps {
+				sh 'echo $secret'
+			}
+		}
+	}
+}
+--------
+POST ACTIONS
+---------
+pipeline {
+	agent any
+	stages {
+		stage('Test') {
+			steps {
+				sh 'echo "Fail!"; exit 1'
+			}
+		}
+	}
+	post {
+		always {
+			echo 'I will always get executed :D'
+		}
+		success {
+			echo 'I will only get executed if this success'
+		}
+		failure {
+			echo 'I will only get executed if this fails'
+		}
+		unstable {
+			echo 'I will only get executed if this is unstable'
+		}
+	}
+}
+----------
+General Login steps;
+----------
+1. Connect internet to laptop and Open VirutualBox-Start centos
+2. Enter Linux Centos Machine uname/pwd: jenkins/1234
+3. type ip a -> to show IP Address(ip should start with 192)eg. 192.168.225.85
+4. Open putty connect to this ip 192.168.225.85 -> enter username/passwd - jenkins/1234
+cd jenkins-data/
+docker images
+docker-compose build
+docker-compose up -d
+docker ps
+
+To Open Jenkins in browser http://192.168.225.85:8080/
+Jenkins uname/pwd: admin/1234
+
+-----------------
 
 
